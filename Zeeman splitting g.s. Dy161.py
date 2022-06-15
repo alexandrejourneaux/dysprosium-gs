@@ -102,7 +102,7 @@ H = lambda magBgauss: (A * IdotJ
                     + gJ * muB * magBgauss*1e-4 * Jz / h
                     + gI * muN *  magBgauss*1e-4 * Iz / h)
 
-b_array = np.linspace(0, 3000, 10000)
+b_array = np.linspace(0, 3000, 5000)
 eigvals = np.empty((dim_space, len(b_array)))
 for j, b in enumerate(b_array):
     eigvals[:, j] = np.linalg.eigh(H(b))[0]
@@ -110,6 +110,10 @@ for j, b in enumerate(b_array):
 plt.figure()
 for i in range(dim_space):    
     plt.plot(b_array, eigvals[i])
-plt.ylim((-8e9, 8e9))
+
 plt.xlim((0, 2000))
+plt.ylim((-8e9, 8e9))
+plt.xlabel("Magnetic field (Gauss)")
+plt.ylabel("Energy (GHz)")
+plt.savefig("eigenenergies_vs_mag_field.png")
     
