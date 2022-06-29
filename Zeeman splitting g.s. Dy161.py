@@ -91,10 +91,6 @@ Jy = 1/2j * (Jplus - Jminus)
 A = -116.231e6
 B = 1091.577e6
 
-# A = -102.09e6
-# B = 3883e6
-
-
 IdotJ = Ix@Jx + Iy@Jy + Iz@Jz
 
 H = lambda magBgauss: (A * IdotJ
