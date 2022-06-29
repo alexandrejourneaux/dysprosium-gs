@@ -98,7 +98,7 @@ B = 1091.577e6
 IdotJ = Ix@Jx + Iy@Jy + Iz@Jz
 
 H = lambda magBgauss: (A * IdotJ
-                    + B * (3/2 * IdotJ@(2*IdotJ + 1) - I*(I+1)*J*(J+1) * Identity) / (2*I*(2*I-1)*J*(2*J-1)) #) / 4.5
+                    + B * (3/2 * IdotJ@(2*IdotJ + 1) - I*(I+1)*J*(J+1) * Identity) / (2*I*(2*I-1)*J*(2*J-1))
                     + gJ * muB * magBgauss*1e-4 * Jz / h
                     + gI * muN *  magBgauss*1e-4 * Iz / h)
 
