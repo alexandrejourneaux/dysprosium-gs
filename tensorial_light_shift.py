@@ -1,10 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import re
+import time
 from sympy.physics.wigner import wigner_6j
 from scipy.constants import h, hbar, c, epsilon_0
 from scipy.constants import physical_constants
 from sympy.physics.quantum import cg
+from tikzplotlib import clean_figure as tikz_clean, save as tikz_save
+
 
 a0 = physical_constants["Bohr radius"][0]
 
@@ -33,7 +36,6 @@ J = 8
 I = 5/2
 F = 21/2
 
-ELsquared = 1
 eL = np.array([1, 0, 0])
 wL = rads2nm(628)
 
@@ -70,7 +72,7 @@ def alphaT(wL, RWA=False):
 #%% Plot polarizabilities
 
 if __name__=="__main__":
-    wArray = np.linspace(nm2rads(400), nm2rads(1000), 1000)
+    wArray = np.linspace(nm2rads(400), nm2rads(1000), 5000)
     alphaSarray = [alphaS(w) for w in wArray]
     alphaVarray = [alphaV(w) for w in wArray]
     alphaTarray = [alphaT(w) for w in wArray]
@@ -79,19 +81,40 @@ if __name__=="__main__":
 #%%
 
 if __name__=="__main__":
-    plt.subplot(311)
-    plt.plot(2*np.pi*c/wArray*1e9, np.array(alphaSarray)/1.648e-41)
+    ax1 = plt.subplot(311)
+    y = np.array(alphaSarray)/1.648e-41
+    condition = np.where((y>=-1000)&(y<=1700))
+    plt.plot(2*np.pi*c/wArray[condition]*1e9, y[condition], c="C0")
     # plt.title()
-    plt.ylim(0, 700)
-    
-    plt.subplot(312)
-    plt.plot(2*np.pi*c/wArray*1e9, np.array(alphaVarray)/1.648e-41)
-    plt.ylim(-100, 100)
-    
-    plt.subplot(313)
-    plt.plot(2*np.pi*c/wArray*1e9, np.array(alphaTarray)/1.648e-41)
-    plt.ylim(-100, 100)
+    plt.ylabel(r"$\alpha^s$ (u.at.)")
 
+    
+    ax2 = plt.subplot(312, sharex = ax1)
+    y = np.array(alphaVarray)/1.648e-41
+    condition = np.where((y>=-1000)&(y<=1000))
+    plt.plot(2*np.pi*c/wArray[condition]*1e9, y[condition], c="C1")
+    plt.ylabel(r"$\alpha^t$ (u.at.)")
+    
+    ax3 = plt.subplot(313, sharex = ax1)
+    y = np.array(alphaTarray)/1.648e-41
+    condition = np.where((y>=-1000)&(y<=1000))
+    plt.plot(2*np.pi*c/wArray[condition]*1e9, y[condition], c="C2")
+    plt.ylabel(r"$\alpha^t$ (u.at.)")
+
+    plt.setp(ax1.get_xticklabels(), visible=False)
+    plt.setp(ax2.get_xticklabels(), visible=False)
+    
+    plt.xlabel(r"Longueur d’onde $\lambda$ (nm)")
+
+    # tikz_clean()
+    # ax1.set_ylim(0, 700)
+    ax2.set_ylim(-500, 500)
+    ax3.set_ylim(-500, 500)
+    
+    tikz_save("polarisability.tikz")
+    
+    
+    
 #%% Plot polarizabilities
 
 if __name__=="__main__":
@@ -132,10 +155,18 @@ def V_F(ELsquared, eL, wL, F, mF):
 
 #%% Light shifts in the I, J, mI, mJ basis (first order perturbation)
 
-def V_IJ(ELsquared, wL, I, J, mI, mJ):
+
+
+def V_IJ(power, waist, wavelength, mI, mJ):
+    wL = nm2rads(wavelength*1e9)
+    intensity = 2*power/(np.pi*waist**2)
+    ELsquared = 2 * intensity / (epsilon_0 * c)
     temp_sum = 0
     for F in np.arange(np.abs(I-J), I+J+1, 1):
         for mF in np.arange(-F, F+1, 1):
             CG_coeff = complex(cg.CG(I, mI, J, mJ, F, mF).doit())
-            temp_sum += CG_coeff.conjugate()*CG_coeff * V_F(ELsquared, eL, wL, F, mF)
+            V = V_F(ELsquared, eL, wL, F, mF) 
+            temp_sum += CG_coeff.conjugate()*CG_coeff * V
     return temp_sum
+
+

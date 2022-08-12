@@ -1,7 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 from scipy.constants import physical_constants
 from scipy.constants import h
+from tikzplotlib import clean_figure as tikz_clean, save as tikz_save
+
+from tensorial_light_shift import V_IJ, transition626, nm2rads, rads2nm
+
+no_light_shift = True
 
 muB, muN = physical_constants["Bohr magneton"][0], physical_constants["nuclear magneton"][0]
 
@@ -91,6 +97,11 @@ Jy = 1/2j * (Jplus - Jminus)
 A = -116.231e6
 B = 1091.577e6
 
+power = 4 # W
+waist = 50e-6 # m
+detuning = 100e6
+wavelength = rads2nm(transition626[1])*1e9
+
 IdotJ = Ix@Jx + Iy@Jy + Iz@Jz
 
 H = lambda magBgauss: (A * IdotJ
@@ -98,18 +109,48 @@ H = lambda magBgauss: (A * IdotJ
                     + gJ * muB * magBgauss*1e-4 * Jz / h
                     + gI * muN *  magBgauss*1e-4 * Iz / h)
 
-b_array = np.linspace(0, 3000, 5000)
-eigvals = np.empty((dim_space, len(b_array)))
-for j, b in enumerate(b_array):
-    eigvals[:, j] = np.linalg.eigh(H(b))[0]
-
-plt.figure()
-for i in range(dim_space):    
-    plt.plot(b_array, eigvals[i])
-
-plt.xlim((0, 2000))
-plt.ylim((-8e9, 8e9))
-plt.xlabel("Magnetic field (Gauss)")
-plt.ylabel("Energy (GHz)")
-plt.savefig("eigenenergies_vs_mag_field.png")
+if no_light_shift:
+    b_array = np.linspace(0, 3000, 200)
+    eigvals = np.empty((dim_space, len(b_array)))
+    for j, b in enumerate(b_array):
+        eigvals[:, j] = np.linalg.eigh(H(b))[0]
     
+    plt.figure()
+    for i in range(dim_space):    
+        plt.plot(b_array, eigvals[i]/1e9)
+    
+    plt.xlim((0, 2000))
+    plt.ylim((-8, 8))
+    plt.xlabel("Magnetic field ($G$)")
+    plt.ylabel("Energy ($GHz$)")
+    # plt.savefig("eigenenergies_vs_mag_field.png")
+    tikz_clean()
+    tikz_save("zeeman_paschen_back.tikz")
+    
+else:
+    b_array = np.linspace(0, 3000, 200)
+    eigvals_unperturbed = np.empty((dim_space, len(b_array)))
+    eigvects = np.empty((dim_space, dim_space, len(b_array)), dtype=complex)
+    for j, b in enumerate(b_array):
+        eigvals_unperturbed[:, j], eigvects[:, :, j] = np.linalg.eigh(H(b))
+    
+    
+    V_IJ_array = []
+    for mI in mIs:
+        for mJ in mJs:
+            print(mI, mJ)
+            V_IJ_array.append(V_IJ(power, waist, wavelength, mI, mJ))
+    
+    eigvals_perturbed = np.empty(eigvals_unperturbed.shape)
+    for i in tqdm(enumerate(range(dim_space))):
+        for j in range(len(b_array)):
+            eigvals_perturbed[i,j] = eigvals_unperturbed[i,j] + np.sum([eigvects[u,i,j].conjugate()*eigvects[u,i,j]*V_IJ_array[u] for u in range(len(V_IJ_array))])/h
+    
+    plt.figure()
+    for i in range(dim_space):    
+        plt.plot(b_array, eigvals_perturbed[i])
+    
+    plt.xlim((0, 2000))
+    plt.ylim((-8e9, 8e9))
+    plt.xlabel("Magnetic field (Gauss)")
+    plt.ylabel("Energy (GHz)")
