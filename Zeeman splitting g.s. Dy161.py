@@ -124,8 +124,8 @@ if no_light_shift:
     plt.xlabel("Magnetic field ($G$)")
     plt.ylabel("Energy ($GHz$)")
     # plt.savefig("eigenenergies_vs_mag_field.png")
-    tikz_clean()
-    tikz_save("zeeman_paschen_back.tikz")
+    #tikz_clean()
+    #tikz_save("zeeman_paschen_back.tikz")
     
 else:
     b_array = np.linspace(0, 3000, 200)

@@ -111,7 +111,7 @@ if __name__=="__main__":
     ax2.set_ylim(-500, 500)
     ax3.set_ylim(-500, 500)
     
-    tikz_save("polarisability.tikz")
+    #tikz_save("polarisability.tikz")
     
     
     
